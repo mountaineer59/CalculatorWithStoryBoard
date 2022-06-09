@@ -38,6 +38,10 @@ class ViewController: UIViewController {
         
     }
     
+    /*
+     when user taps on any number, this function is invoked
+     It keeps track of the running number and updates the UI and any operands
+     */
     @IBAction func numberTapped(_ sender: RoundButton) {
         if runningNumber.count <= 8 {
             runningNumber += "\(sender.tag)"
@@ -58,6 +62,9 @@ class ViewController: UIViewController {
         }
     }
     
+    /*
+     Resets all variables
+     */
     @IBAction func clearTapped(_ sender: RoundButton) {
         runningNumber = ""
         firstOperand = ""
@@ -67,8 +74,12 @@ class ViewController: UIViewController {
         inputLabel.text = ""
         commaButton.isHidden = true
         inputNumbers = []
+        operationLabel.text = ""
     }
     
+    /*
+     Turns the running number into a decimal value
+     */
     @IBAction func dotTapped(_ sender: RoundButton) {
         
         //restrict user from adding last digit as a dot
@@ -89,7 +100,9 @@ class ViewController: UIViewController {
         }
     }
 
-    
+    /*
+     Calculates the result for both types of operations
+     */
     @IBAction func equalTapped(_ sender: RoundButton) {
         if notAdvancedOperations() {
             handleNormalOperations()
@@ -98,6 +111,17 @@ class ViewController: UIViewController {
         }
     }
     
+    
+    /*
+     For below functions,
+     addTapped;
+     subtractTapped;
+     multiplyTapped;
+     divideTapped;
+     If Advanced operatios are already selected, these methods turn them off.
+     If user has only typed 1 number, it only appends the operator to the number.
+     If user has already typed an operation e.g. (5+3), and when this function is invoked, it calculates the result e.g. (8+) and appends the operator for further calcualtion
+     */
     @IBAction func addTapped(_ sender: RoundButton) {
         
         //toggle when user selects this operation after selecting mean/median
@@ -127,6 +151,8 @@ class ViewController: UIViewController {
         prepareFor(selectedOperation : .Divide)
     }
     
+    
+    //Changes the sign of the running number and updates the UI
     @IBAction func plusMinus(_ sender: RoundButton) {
         
         //toggle plusminus
@@ -140,13 +166,24 @@ class ViewController: UIViewController {
         }
         //update UI
         if notAdvancedOperations() {
-            inputLabel.text = runningNumber
+            if firstOperand != "" && engineOperation != .NULL {
+                inputLabel.text = firstOperand + engineOperation.rawValue + runningNumber
+            } else {
+                inputLabel.text = runningNumber
+            }
+            
         } else {//Mn, Md selected
             updateInputLabelWithArrayElements()
         }
         
     }
     
+    /*
+     For below functions,
+     meanTapped;
+     medianTapped;
+     They change the UI (adds parantheses, comma button & label for the operation) for the user to be able to add a number
+     */
     @IBAction func meanTapped(_ sender: RoundButton) {
         toggleAdvancedOperationState(with : .Mean, off: false)
     }
@@ -155,6 +192,9 @@ class ViewController: UIViewController {
         toggleAdvancedOperationState(with : .Median, off: false)
     }
     
+    /*
+     Once tapped, adds the running number to the array and updates the UI
+     */
     @IBAction func commaTapped(_ sender: RoundButton) {
         
         //add last element to the array
@@ -168,8 +208,9 @@ class ViewController: UIViewController {
         }
     }
     
+    
     /*
-     Utility functions
+     Utility functions below
      */
     fileprivate func notAdvancedOperations() -> Bool {
         return engineOperation != .Mean && engineOperation != .Median
@@ -183,12 +224,14 @@ class ViewController: UIViewController {
         return engineOperation == .Mean || engineOperation == .Median
     }
     
+    
     /*
      Helper functions below
      */
+    
+    //Restricts adding multiple dots
     fileprivate func handleMultipleDots() {
         
-        //restrict adding multiple dots
         if !runningNumber.contains("."){
             runningNumber += "."
         } else {
@@ -198,6 +241,7 @@ class ViewController: UIViewController {
         }
     }
     
+    //Updates UI with array elements
     fileprivate func updateInputLabelWithArrayElements() {
         var temp = ""
         for element in inputNumbers {
@@ -207,6 +251,10 @@ class ViewController: UIViewController {
     }
     
     
+    /*
+     Called from equalTapped() & handleCalculationsWithoutEqualTapped().
+     Creates an object of Calculator and updats the Result in the UI
+    */
     fileprivate func handleNormalOperations() {
         
         secondOperand = runningNumber
@@ -224,6 +272,10 @@ class ViewController: UIViewController {
         resultLabel.text = result
     }
     
+    /*
+     Called from equalTapped().
+     Creates an object of CalculatorPro and updats the Result in the UI
+     */
     fileprivate func handleAdvancedOperations() {
         //Mean or Median selected
         if anyAdvancedOperationSelected() {
@@ -248,6 +300,7 @@ class ViewController: UIViewController {
         }
     }
     
+    //Updates UI with selected operation
     private func updateInputLabelWith(selectedOperation : CalcOperation){
         
         if runningNumber != ""{
@@ -257,6 +310,7 @@ class ViewController: UIViewController {
         }
     }
     
+    //Sets the main operation that is to be carried out
     private func prepareFor(selectedOperation : CalcOperation){
         if runningNumber != ""{
             firstOperand = runningNumber
@@ -265,8 +319,8 @@ class ViewController: UIViewController {
         engineOperation = selectedOperation
     }
     
+    //called from handleNormalOperations()
     fileprivate func formatAndCleanUpVariables() {
-
         result = formatNumber(number: result)
         firstOperand = result // for continuing further operations
         runningNumber = firstOperand
@@ -275,6 +329,75 @@ class ViewController: UIViewController {
         
     }
     
+    /*
+     Called from toggleAdvancedOperationState() for normal operations.
+     This function checks if the input string already has any operands and based on that, calls handleNormalOperations()
+     */
+    fileprivate func handleCalculationWithoutEqualTapped() {
+        
+        if let text = inputLabel.text, !text.isEmpty {
+                        
+            if text.contains("--") {//when second operand has a negative sign & main operator is -ve
+                
+                if splitSuccess(text,mainOperator:  "--") { handleNormalOperations() }
+                
+            } else if text.contains("+-") { //when second operand has a negative sign & main operator is +ve
+                
+                if splitSuccess(text,mainOperator:  "+-"){ handleNormalOperations() }
+                
+            } else if text.contains("*-") { //when second operand has a negative sign & main operator is *(multiply)
+                
+               if splitSuccess(text,mainOperator:  "*-") { handleNormalOperations() }
+                
+            } else if text.contains("/-") { //when second operand has a negative sign & main operator is /(divide)
+                
+                if splitSuccess(text,mainOperator:  "/-") { handleNormalOperations() }
+                
+           } else if text.contains("+") || text.contains("-") || text.contains("*") || text.contains("/"){ // when no negative sign is in inputLabel
+                var elements = text.components(separatedBy: ["+", "-", "*", "/"])
+                
+                //preprocess elements array
+                if "\(text.prefix(1))" == "-"{
+                    let itemOneToRemove = "-"
+                    let itemTwoToRemove = ""
+                    for object in elements {
+                        if object == itemOneToRemove {
+                            elements.remove(at: elements.firstIndex(of: itemOneToRemove)!)
+                        }
+                        if object == itemTwoToRemove {
+                            elements.remove(at: elements.firstIndex(of: itemTwoToRemove)!)
+                        }
+                    }
+                }
+                // if operands exist in the array, calcualte result
+                if elements.count == 2 {
+                    firstOperand = elements[0]
+                    secondOperand = elements[1]
+                    if "\(text.prefix(1))" == "-"{
+                        firstOperand = "-" + firstOperand
+                    }
+                    handleNormalOperations()
+                }
+            }
+        }
+    }
+    
+    //splits the passed string by second argument, sets the first & second operands, and notifies the caller
+    fileprivate func splitSuccess(_ text: String, mainOperator : String) -> Bool{
+        let seperatedNumbers = text.replacingOccurrences(of: mainOperator, with: ",")
+        let elements = seperatedNumbers.components(separatedBy: [","])
+        if elements.count == 2 {
+            firstOperand = elements[0]
+            secondOperand = "-" + elements[1]
+            return true
+        }
+        return false
+    }
+    
+    /*
+     Called from all the opeator buttons
+     If called from normal operators, it turns advanced operation off, and calls handleCalculationWithoutEqualTapped()
+     */
     fileprivate func toggleAdvancedOperationState(with operation : CalcOperation = .NULL, off : Bool) {
         if commaButton.isHidden == true && !off{
             commaButton.isHidden = false
@@ -289,12 +412,14 @@ class ViewController: UIViewController {
             
         } else {
             commaButton.isHidden = true
+            handleCalculationWithoutEqualTapped()
             inputLabel.text = ""
             engineOperation = .NULL
             operationLabel.text = ""
         }
     }
     
+    // A helper function for formatting the number
     private func formatNumber(number: String) -> String{
         var number = number
         if number != "." && !number.isEmpty{

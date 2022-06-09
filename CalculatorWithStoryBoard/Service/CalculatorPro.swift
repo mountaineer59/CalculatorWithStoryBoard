@@ -35,6 +35,7 @@ struct CalculatorPro {
         return result!
     }
     
+    //calcualates an average of its arguments 
     private func calculateMean(inputArray: [Double] = [], firstMiddleIndexElement : Double = Double(Int.min),secondMiddleIndexElement: Double = Double(Int.min) ) -> Double{
         var average : Double = 0
         
